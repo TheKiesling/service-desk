@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { ticketService } from '../services/api';
+import { gitlabService } from '../services/gitlabService';
 
 const TicketContext = createContext();
 
@@ -16,11 +16,11 @@ export const TicketProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchTickets = async (filters = {}) => {
+  const fetchTickets = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await ticketService.getAll(filters);
+      const data = await gitlabService.getAllIssues();
       setTickets(data);
     } catch (err) {
       setError(err.message);
@@ -31,35 +31,36 @@ export const TicketProvider = ({ children }) => {
 
   const createTicket = async (ticketData) => {
     try {
-      const newTicket = await ticketService.create(ticketData);
-      setTickets((prev) => [newTicket, ...prev]);
-      return newTicket;
+      const newIssue = await gitlabService.createIssue(ticketData);
+      setTickets((prev) => [newIssue, ...prev]);
+      return newIssue;
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  const updateTicket = async (id, updates) => {
+  const updateTicket = async (iid, updates) => {
     try {
-      const updatedTicket = await ticketService.update(id, updates);
+      const updatedIssue = await gitlabService.updateIssue(iid, updates);
       setTickets((prev) =>
-        prev.map((ticket) => (ticket._id === id ? updatedTicket : ticket))
+        prev.map((ticket) => (ticket.iid === iid ? updatedIssue : ticket))
       );
-      return updatedTicket;
+      return updatedIssue;
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  const addComment = async (ticketId, comment) => {
+  const addComment = async (iid, commentBody) => {
     try {
-      const updatedTicket = await ticketService.addComment(ticketId, comment);
+      await gitlabService.addIssueNote(iid, commentBody);
+      const updatedIssue = await gitlabService.getIssueByIid(iid);
       setTickets((prev) =>
-        prev.map((ticket) => (ticket._id === ticketId ? updatedTicket : ticket))
+        prev.map((ticket) => (ticket.iid === iid ? updatedIssue : ticket))
       );
-      return updatedTicket;
+      return updatedIssue;
     } catch (err) {
       setError(err.message);
       throw err;

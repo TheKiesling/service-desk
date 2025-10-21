@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
-  Edit, 
-  Save, 
-  X, 
   Clock, 
-  User, 
   AlertCircle, 
   Tag,
   MessageSquare 
@@ -20,13 +16,9 @@ import './TicketDetail.css';
 const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { ticket, loading, updateTicket, addComment } = useTicket(id);
+  const { ticket, comments, loading, addComment } = useTicket(id);
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({});
   const [newComment, setNewComment] = useState('');
-  const [commentAuthor, setCommentAuthor] = useState('');
-  const [isInternal, setIsInternal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) {
@@ -49,48 +41,14 @@ const TicketDetail = () => {
     );
   }
 
-  const handleEdit = () => {
-    setEditData({
-      status: ticket.status,
-      priority: ticket.priority,
-      assignedTo: ticket.assignedTo || '',
-      escalationLevel: ticket.escalationLevel,
-    });
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditData({});
-  };
-
-  const handleSaveEdit = async () => {
-    setSubmitting(true);
-    try {
-      await updateTicket(editData);
-      setIsEditing(false);
-      setEditData({});
-    } catch (error) {
-      alert('Error al actualizar el ticket');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim() || !commentAuthor.trim()) return;
+    if (!newComment.trim()) return;
 
     setSubmitting(true);
     try {
-      await addComment({
-        author: commentAuthor,
-        content: newComment,
-        isInternal,
-      });
+      await addComment(newComment);
       setNewComment('');
-      setCommentAuthor('');
-      setIsInternal(false);
     } catch (error) {
       alert('Error al agregar comentario');
     } finally {
@@ -98,26 +56,32 @@ const TicketDetail = () => {
     }
   };
 
-  const getPriorityClass = (priority) => {
+  const getPriorityLabel = (labels) => {
+    if (!labels) return null;
+    const priorityLabel = labels.find(label => label.match(/^P[1-4]$/));
+    return priorityLabel;
+  };
+
+  const getPriorityClass = (label) => {
     const classes = {
       P1: 'badge-p1',
       P2: 'badge-p2',
       P3: 'badge-p3',
       P4: 'badge-p4',
     };
-    return classes[priority] || 'badge-p3';
+    return classes[label] || 'badge-p3';
   };
 
-  const getStatusClass = (status) => {
-    const normalizedStatus = status.toLowerCase().replace(/\s/g, '-');
+  const getStatusClass = (state) => {
     const classes = {
-      'abierto': 'badge-open',
-      'en-progreso': 'badge-in-progress',
-      'en-espera': 'badge-waiting',
-      'resuelto': 'badge-resolved',
-      'cerrado': 'badge-closed',
+      'opened': 'badge-open',
+      'closed': 'badge-closed',
     };
-    return classes[normalizedStatus] || 'badge-open';
+    return classes[state] || 'badge-open';
+  };
+
+  const getStatusLabel = (state) => {
+    return state === 'opened' ? 'Abierto' : 'Cerrado';
   };
 
   return (
@@ -127,27 +91,6 @@ const TicketDetail = () => {
           <ArrowLeft size={18} />
           Volver al Tablero
         </button>
-        {!isEditing ? (
-          <button className="btn btn-primary" onClick={handleEdit}>
-            <Edit size={18} />
-            Editar Ticket
-          </button>
-        ) : (
-          <div className="edit-actions">
-            <button className="btn btn-secondary" onClick={handleCancelEdit}>
-              <X size={18} />
-              Cancelar
-            </button>
-            <button 
-              className="btn btn-success" 
-              onClick={handleSaveEdit}
-              disabled={submitting}
-            >
-              <Save size={18} />
-              Guardar Cambios
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="ticket-detail-content">
@@ -156,11 +99,13 @@ const TicketDetail = () => {
             <div className="ticket-title-section">
               <h1>{ticket.title}</h1>
               <div className="ticket-badges">
-                <span className={`badge ${getPriorityClass(ticket.priority)}`}>
-                  {ticket.priority}
-                </span>
-                <span className={`badge ${getStatusClass(ticket.status)}`}>
-                  {ticket.status}
+                {getPriorityLabel(ticket.labels) && (
+                  <span className={`badge ${getPriorityClass(getPriorityLabel(ticket.labels))}`}>
+                    {getPriorityLabel(ticket.labels)}
+                  </span>
+                )}
+                <span className={`badge ${getStatusClass(ticket.state)}`}>
+                  {getStatusLabel(ticket.state)}
                 </span>
               </div>
             </div>
@@ -169,25 +114,23 @@ const TicketDetail = () => {
               <div className="meta-item">
                 <Clock size={16} />
                 <span>
-                  Creado {formatDistanceToNow(new Date(ticket.createdAt), { 
+                  Creado {formatDistanceToNow(new Date(ticket.created_at), { 
                     addSuffix: true, 
                     locale: es 
                   })}
                 </span>
               </div>
-              <div className="meta-item">
-                <AlertCircle size={16} />
-                <span>{ticket.service}</span>
-              </div>
-              <div className="meta-item">
-                <Tag size={16} />
-                <span>{ticket.category}</span>
-              </div>
+              {ticket.labels && ticket.labels.length > 0 && (
+                <div className="meta-item">
+                  <Tag size={16} />
+                  <span>{ticket.labels.filter(l => !l.match(/^P[1-4]$/)).join(', ')}</span>
+                </div>
+              )}
             </div>
 
             <div className="ticket-description">
               <h3>Descripción</h3>
-              <p>{ticket.description}</p>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{ticket.description}</p>
             </div>
           </div>
 
@@ -199,20 +142,10 @@ const TicketDetail = () => {
               </h3>
             </div>
             
-            <CommentList comments={ticket.comments} />
+            <CommentList comments={comments} />
 
             <form onSubmit={handleAddComment} className="comment-form">
               <h4>Agregar Comentario</h4>
-              <div className="form-group">
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Tu nombre"
-                  value={commentAuthor}
-                  onChange={(e) => setCommentAuthor(e.target.value)}
-                  required
-                />
-              </div>
               <div className="form-group">
                 <textarea
                   className="form-textarea"
@@ -224,14 +157,6 @@ const TicketDetail = () => {
                 />
               </div>
               <div className="comment-form-footer">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={isInternal}
-                    onChange={(e) => setIsInternal(e.target.checked)}
-                  />
-                  <span>Comentario interno (solo equipo de soporte)</span>
-                </label>
                 <button 
                   type="submit" 
                   className="btn btn-primary"
@@ -248,106 +173,56 @@ const TicketDetail = () => {
           <div className="sidebar-card">
             <h3>Detalles del Ticket</h3>
             
-            {isEditing ? (
-              <>
-                <div className="detail-item">
-                  <label className="form-label">Estado</label>
-                  <select
-                    className="form-select"
-                    value={editData.status}
-                    onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                  >
-                    <option value="Abierto">Abierto</option>
-                    <option value="En Progreso">En Progreso</option>
-                    <option value="En Espera">En Espera</option>
-                    <option value="Resuelto">Resuelto</option>
-                    <option value="Cerrado">Cerrado</option>
-                  </select>
-                </div>
+            <div className="detail-item">
+              <span className="detail-label">Estado:</span>
+              <span className="detail-value">
+                {getStatusLabel(ticket.state)}
+              </span>
+            </div>
 
-                <div className="detail-item">
-                  <label className="form-label">Prioridad</label>
-                  <select
-                    className="form-select"
-                    value={editData.priority}
-                    onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
-                  >
-                    <option value="P1">P1 - Crítico</option>
-                    <option value="P2">P2 - Alto</option>
-                    <option value="P3">P3 - Medio</option>
-                    <option value="P4">P4 - Bajo</option>
-                  </select>
-                </div>
+            <div className="detail-item">
+              <span className="detail-label">Autor:</span>
+              <span className="detail-value">
+                {ticket.author?.name || 'Desconocido'}
+              </span>
+            </div>
 
-                <div className="detail-item">
-                  <label className="form-label">Asignado a</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={editData.assignedTo}
-                    onChange={(e) => setEditData({ ...editData, assignedTo: e.target.value })}
-                    placeholder="Nombre del responsable"
-                  />
-                </div>
-
-                <div className="detail-item">
-                  <label className="form-label">Nivel de Escalación</label>
-                  <select
-                    className="form-select"
-                    value={editData.escalationLevel}
-                    onChange={(e) => setEditData({ ...editData, escalationLevel: e.target.value })}
-                  >
-                    <option value="L1">L1 - Service Desk</option>
-                    <option value="L2">L2 - Equipo Técnico</option>
-                    <option value="L3">L3 - Soporte Especializado</option>
-                    <option value="L4">L4 - Gerencia</option>
-                  </select>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="detail-item">
-                  <span className="detail-label">Asignado a:</span>
-                  <span className="detail-value">
-                    {ticket.assignedTo || 'Sin asignar'}
-                  </span>
-                </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">Nivel de Escalación:</span>
-                  <span className="detail-value">{ticket.escalationLevel}</span>
-                </div>
-
-                <div className="detail-item">
-                  <span className="detail-label">Última actualización:</span>
-                  <span className="detail-value">
-                    {formatDistanceToNow(new Date(ticket.updatedAt), { 
-                      addSuffix: true, 
-                      locale: es 
-                    })}
-                  </span>
-                </div>
-              </>
+            {ticket.assignee && (
+              <div className="detail-item">
+                <span className="detail-label">Asignado a:</span>
+                <span className="detail-value">{ticket.assignee.name}</span>
+              </div>
             )}
-          </div>
 
-          <div className="sidebar-card">
-            <h3>Usuario Afectado</h3>
-            <div className="user-info">
-              <div className="detail-item">
-                <User size={16} />
-                <span>{ticket.affectedUser.name}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Email:</span>
-                <span className="detail-value">{ticket.affectedUser.email}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Rol:</span>
-                <span className="detail-value">{ticket.affectedUser.role}</span>
-              </div>
+            <div className="detail-item">
+              <span className="detail-label">Última actualización:</span>
+              <span className="detail-value">
+                {formatDistanceToNow(new Date(ticket.updated_at), { 
+                  addSuffix: true, 
+                  locale: es 
+                })}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Issue IID:</span>
+              <span className="detail-value">#{ticket.iid}</span>
             </div>
           </div>
+
+          {ticket.labels && ticket.labels.length > 0 && (
+            <div className="sidebar-card">
+              <h3>Etiquetas</h3>
+              <div className="user-info">
+                {ticket.labels.map((label, index) => (
+                  <div key={index} className="detail-item">
+                    <Tag size={16} />
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

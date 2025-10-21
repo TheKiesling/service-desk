@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
-import { ticketService } from '../services/api';
+import { gitlabService } from '../services/gitlabService';
 
-export const useTicket = (ticketId) => {
+export const useTicket = (issueIid) => {
   const [ticket, setTicket] = useState(null);
+  const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchTicket = async () => {
-    if (!ticketId) return;
+    if (!issueIid) return;
     
     setLoading(true);
     setError(null);
     try {
-      const data = await ticketService.getById(ticketId);
-      setTicket(data);
+      const [issueData, notesData] = await Promise.all([
+        gitlabService.getIssueByIid(issueIid),
+        gitlabService.getIssueNotes(issueIid)
+      ]);
+      setTicket(issueData);
+      setComments(notesData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -23,20 +28,20 @@ export const useTicket = (ticketId) => {
 
   const updateTicket = async (updates) => {
     try {
-      const updatedTicket = await ticketService.update(ticketId, updates);
-      setTicket(updatedTicket);
-      return updatedTicket;
+      const updatedIssue = await gitlabService.updateIssue(issueIid, updates);
+      setTicket(updatedIssue);
+      return updatedIssue;
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  const addComment = async (comment) => {
+  const addComment = async (commentBody) => {
     try {
-      const updatedTicket = await ticketService.addComment(ticketId, comment);
-      setTicket(updatedTicket);
-      return updatedTicket;
+      const newNote = await gitlabService.addIssueNote(issueIid, commentBody);
+      setComments((prev) => [...prev, newNote]);
+      return newNote;
     } catch (err) {
       setError(err.message);
       throw err;
@@ -45,10 +50,11 @@ export const useTicket = (ticketId) => {
 
   useEffect(() => {
     fetchTicket();
-  }, [ticketId]);
+  }, [issueIid]);
 
   return {
     ticket,
+    comments,
     loading,
     error,
     refetch: fetchTicket,

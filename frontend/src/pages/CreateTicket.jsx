@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, AlertCircle } from 'lucide-react';
+import { Send, AlertCircle, Sparkles } from 'lucide-react';
 import { useTickets } from '../context/TicketContext';
 import './CreateTicket.css';
 
-const GITLAB_LABELS = [
+const CATEGORIAS = [
   'Autenticación',
   'Catálogo',
   'Creación de pedidos',
   'Inventario',
-  'Tracking',
   'UX/UI',
   'Visualización de pedidos',
+  'Actualización de estado de pedidos',
+  'Notificación de estado a clientes',
 ];
 
 const CreateTicket = () => {
@@ -24,13 +25,11 @@ const CreateTicket = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    service: '',
-    category: 'Incidente',
-    priority: 'P3',
+    category: '',
     affectedUser: {
       name: '',
       email: '',
-      role: 'Cliente',
+      role: '',
     },
   });
 
@@ -60,10 +59,18 @@ const CreateTicket = () => {
     setError(null);
 
     try {
-      const ticket = await createTicket(formData);
+      const issueData = {
+        title: formData.title,
+        description: formData.description,
+        labels: [formData.category],
+        category: formData.category,
+        affectedUser: formData.affectedUser,
+      };
+
+      const issue = await createTicket(issueData);
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/ticket/${ticket._id}`);
+        navigate(`/ticket/${issue.iid}`);
       }, 1500);
     } catch (err) {
       setError(err.message || 'Error al crear el ticket');
@@ -75,8 +82,11 @@ const CreateTicket = () => {
   return (
     <div className="create-ticket">
       <div className="create-ticket-header">
+        <div className="header-icon">
+          <Sparkles size={32} />
+        </div>
         <h1>Crear Nuevo Ticket</h1>
-        <p>Complete el formulario para reportar un problema o solicitar un servicio</p>
+        <p>Describe tu problema o solicitud y nos encargaremos del resto</p>
       </div>
 
       <div className="create-ticket-content">
@@ -89,163 +99,120 @@ const CreateTicket = () => {
 
         {success && (
           <div className="alert alert-success">
+            <Sparkles size={20} />
             ¡Ticket creado exitosamente! Redirigiendo...
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="ticket-form">
-          <div className="form-section">
-            <h2>Información del Ticket</h2>
-            
-            <div className="form-group">
-              <label className="form-label" htmlFor="title">
-                Título del Ticket *
-              </label>
-              <input
-                id="title"
-                name="title"
-                type="text"
-                className="form-input"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                placeholder="Ej: Error al actualizar inventario"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="description">
-                Descripción *
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                className="form-textarea"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                placeholder="Describa el problema o solicitud con el mayor detalle posible..."
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="service">
-                  Categoría (GitLab Label) *
-                </label>
-                <select
-                  id="service"
-                  name="service"
-                  className="form-select"
-                  value={formData.service}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione una categoría</option>
-                  {GITLAB_LABELS.map((label) => (
-                    <option key={label} value={label}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="category">
-                  Categoría *
-                </label>
-                <select
-                  id="category"
-                  name="category"
-                  className="form-select"
-                  value={formData.category}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="Incidente">Incidente</option>
-                  <option value="Solicitud de Servicio">Solicitud de Servicio</option>
-                  <option value="Consulta">Consulta</option>
-                  <option value="Cambio">Cambio</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="priority">
-                  Prioridad *
-                </label>
-                <select
-                  id="priority"
-                  name="priority"
-                  className="form-select"
-                  value={formData.priority}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="P1">P1 - Crítico</option>
-                  <option value="P2">P2 - Alto</option>
-                  <option value="P3">P3 - Medio</option>
-                  <option value="P4">P4 - Bajo</option>
-                </select>
-              </div>
-            </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="title">
+              Título *
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              className="form-input"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              placeholder="¿Cuál es el problema?"
+            />
           </div>
 
-          <div className="form-section">
-            <h2>Información del Usuario Afectado</h2>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="affectedUser.name">
-                  Nombre Completo *
-                </label>
-                <input
-                  id="affectedUser.name"
-                  name="affectedUser.name"
-                  type="text"
-                  className="form-input"
-                  value={formData.affectedUser.name}
-                  onChange={handleChange}
-                  required
-                  placeholder="Nombre del usuario afectado"
-                />
-              </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="category">
+              Categoría *
+            </label>
+            <select
+              id="category"
+              name="category"
+              className="form-select"
+              value={formData.category}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona el área relacionada</option>
+              {CATEGORIAS.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="affectedUser.email">
-                  Correo Electrónico *
-                </label>
-                <input
-                  id="affectedUser.email"
-                  name="affectedUser.email"
-                  type="email"
-                  className="form-input"
-                  value={formData.affectedUser.email}
-                  onChange={handleChange}
-                  required
-                  placeholder="usuario@ejemplo.com"
-                />
-              </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="description">
+              Descripción *
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              className="form-textarea"
+              value={formData.description}
+              onChange={handleChange}
+              required
+              rows={6}
+              placeholder="Describe el problema con el mayor detalle posible..."
+            />
+          </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="affectedUser.role">
-                  Rol *
-                </label>
-                <select
-                  id="affectedUser.role"
-                  name="affectedUser.role"
-                  className="form-select"
-                  value={formData.affectedUser.role}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="Cliente">Cliente</option>
-                  <option value="Personal Administrativo">Personal Administrativo</option>
-                  <option value="Personal de Producción">Personal de Producción</option>
-                  <option value="Personal de Ventas">Personal de Ventas</option>
-                  <option value="Gerencia">Gerencia</option>
-                </select>
-              </div>
-            </div>
+          <div className="form-divider">
+            <span>Información de contacto</span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="affectedUser.name">
+              Tu Nombre *
+            </label>
+            <input
+              id="affectedUser.name"
+              name="affectedUser.name"
+              type="text"
+              className="form-input"
+              value={formData.affectedUser.name}
+              onChange={handleChange}
+              required
+              placeholder="Nombre completo"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="affectedUser.email">
+              Correo Electrónico *
+            </label>
+            <input
+              id="affectedUser.email"
+              name="affectedUser.email"
+              type="email"
+              className="form-input"
+              value={formData.affectedUser.email}
+              onChange={handleChange}
+              required
+              placeholder="tu@email.com"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="affectedUser.role">
+              Rol *
+            </label>
+            <select
+              id="affectedUser.role"
+              name="affectedUser.role"
+              className="form-select"
+              value={formData.affectedUser.role}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecciona tu rol</option>
+              <option value="Cliente">Cliente</option>
+              <option value="Personal Administrativo">Personal Administrativo</option>
+              <option value="Personal de Producción">Personal de Producción</option>
+              <option value="Personal de Ventas">Personal de Ventas</option>
+              <option value="Gerencia">Gerencia</option>
+            </select>
           </div>
 
           <div className="form-actions">

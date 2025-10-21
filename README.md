@@ -1,6 +1,6 @@
 # Service Desk - Sistema de Gestión de Uniformes
 
-Sistema completo de Service Desk para atención de problemas y gestión de tickets, desarrollado específicamente para el proyecto de gestión de uniformes escolares e industriales.
+Sistema completo de Service Desk para atención de problemas y gestión de tickets, desarrollado específicamente para el proyecto de gestión de uniformes escolares e industriales. **Utiliza GitLab Issues como backend para la gestión de tickets.**
 
 ## 📋 Descripción
 
@@ -13,6 +13,8 @@ Este proyecto implementa un Service Desk basado en las mejores prácticas de ITI
 - **Catálogo de Productos**: Visualización de productos disponibles
 - **Autenticación y Accesos**: Sistema de login y permisos
 
+**Arquitectura**: La aplicación es un frontend React que se conecta directamente a la API de GitLab para gestionar tickets como Issues, eliminando la necesidad de un backend personalizado y base de datos propia.
+
 ## 🚀 Características
 
 ### Funcionalidades Principales
@@ -20,26 +22,26 @@ Este proyecto implementa un Service Desk basado en las mejores prácticas de ITI
 1. **Ingreso de Tickets**
    - Formulario completo para reportar problemas o solicitudes
    - Categorización por servicio, prioridad y tipo
-   - Información del usuario afectado
-   - **Integración automática con GitLab Issues**
+   - Información del usuario afectado en la descripción
+   - **Creación directa como GitLab Issues**
 
 2. **Tablero de Seguimiento**
-   - Vista tipo Kanban con tickets agrupados por estado
-   - Filtros por estado, prioridad y servicio
-   - Actualización en tiempo real
+   - Vista simplificada con tickets agrupados por estado (Abiertos/Cerrados)
+   - Filtros por prioridad y etiquetas
+   - Datos en tiempo real desde GitLab
 
 3. **Detalle de Tickets**
-   - Vista completa de información del ticket
-   - Sistema de comentarios con seguimiento
-   - Comentarios internos para el equipo de soporte
-   - Edición de estado, prioridad y asignación
-   - **Comentarios sincronizados con GitLab**
+   - Vista completa de información del issue de GitLab
+   - Sistema de comentarios usando GitLab Notes
+   - Edición de estado (abrir/cerrar)
+   - Visualización de etiquetas, autor y asignados
+   - **Todos los datos provienen directamente de GitLab**
 
-4. **Integración GitLab**
-   - Creación automática de issues en GitLab
-   - Sincronización de comentarios
-   - Labels automáticos por servicio y prioridad
-   - Ver [INTEGRACION_GITLAB.md](INTEGRACION_GITLAB.md) para más detalles
+4. **Integración Completa con GitLab**
+   - Frontend se conecta directamente a la API de GitLab
+   - No requiere backend personalizado
+   - Labels automáticos por servicio, categoría y prioridad
+   - Proyecto GitLab: https://gitlab.com/proyecto/75469260
 
 ### Categorización de Tickets
 
@@ -57,27 +59,26 @@ Este proyecto implementa un Service Desk basado en las mejores prácticas de ITI
 
 ## 🛠️ Tecnologías
 
-### Backend
-- **Node.js** con Express
-- **PostgreSQL** con Sequelize ORM
-- **GitLab API** para gestión de issues
-- **CORS** para comunicación frontend-backend
-- API RESTful
-
-### Frontend
+### Frontend (Aplicación Principal)
 - **React 18** con Vite
 - **React Router** para navegación
-- **Recharts** para visualización de datos
+- **Axios** para peticiones a GitLab API
 - **Lucide React** para iconos
 - **date-fns** para manejo de fechas
-- **Axios** para peticiones HTTP
+- Diseño responsive con CSS moderno
+
+### Backend (GitLab)
+- **GitLab Issues** como sistema de tickets
+- **GitLab Notes** como sistema de comentarios
+- **GitLab Labels** para categorización
+- **GitLab API v4** como backend completo
 
 ## 📦 Instalación
 
 ### Prerrequisitos
 - Node.js (v18 o superior)
-- PostgreSQL (v12 o superior) - **Ver [CONFIGURACION_POSTGRESQL.md](CONFIGURACION_POSTGRESQL.md) para instalar**
 - npm o yarn
+- Cuenta de GitLab y token de acceso personal
 
 ### 1. Clonar el repositorio
 ```bash
@@ -85,127 +86,101 @@ git clone <url-del-repositorio>
 cd service-desk
 ```
 
-### 2. Configurar PostgreSQL
+### 2. Obtener Token de GitLab
 
-Ver guía completa en [CONFIGURACION_POSTGRESQL.md](CONFIGURACION_POSTGRESQL.md)
+1. Ir a GitLab: https://gitlab.com/-/profile/personal_access_tokens
+2. Crear un nuevo token con los siguientes scopes:
+   - `api` (acceso completo a la API)
+   - `read_api`
+   - `write_repository`
+3. Copiar el token generado (¡guárdalo en un lugar seguro!)
 
-**Resumen rápido**:
-```bash
-# Instalar PostgreSQL y crear base de datos
-psql -U postgres -c "CREATE DATABASE service_desk;"
-```
-
-### 3. Configurar Backend
-
-```bash
-cd backend
-npm install
-```
-
-Crear archivo `.env` en la carpeta `backend`:
-```env
-PORT=5000
-NODE_ENV=development
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=service_desk
-DB_USER=postgres
-DB_PASSWORD=tu_password
-
-# GitLab API
-GITLAB_PROJECT_ID=75469260
-GITLAB_TOKEN=tu_token_gitlab
-```
-
-**Nota**: Ver [INTEGRACION_GITLAB.md](INTEGRACION_GITLAB.md) para obtener el token de GitLab.
-
-Inicializar base de datos y iniciar servidor:
-```bash
-npm run seed    # Crea tablas e inserta datos de ejemplo
-npm run dev     # Inicia el servidor
-```
-
-### 4. Configurar Frontend
+### 3. Configurar Frontend
 
 ```bash
 cd frontend
 npm install
 ```
 
-Crear archivo `.env` en la carpeta `frontend` (opcional):
+Crear archivo `.env` en la carpeta `frontend`:
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_GITLAB_TOKEN=tu_token_de_gitlab_aquí
 ```
 
-Iniciar la aplicación:
+**⚠️ IMPORTANTE**: Nunca subas el archivo `.env` a Git. Ya está incluido en `.gitignore`.
+
+### 4. Iniciar la aplicación
+
 ```bash
 npm run dev
 ```
 
+La aplicación estará disponible en `http://localhost:5173`
+
+## ⚙️ Configuración del Proyecto GitLab
+
+El proyecto utiliza el siguiente proyecto de GitLab:
+- **Project ID**: 75469260
+- **API Base URL**: https://gitlab.com/api/v4
+- **Endpoints principales**:
+  - `GET /projects/75469260/issues` - Obtener todos los issues
+  - `POST /projects/75469260/issues` - Crear un issue
+  - `GET /projects/75469260/issues/:iid/notes` - Obtener comentarios
+  - `POST /projects/75469260/issues/:iid/notes` - Agregar comentario
+
 ## 🚀 Uso
 
-1. **Iniciar PostgreSQL**
-   ```bash
-   # Windows - PostgreSQL ya debería estar corriendo como servicio
-   # Si no, verificar:
-   Get-Service postgresql*
-   ```
-
-2. **Iniciar Backend** (puerto 5000)
-   ```bash
-   cd backend
-   npm run dev
-   ```
-
-3. **Inicializar datos (primera vez)**
-   ```bash
-   cd backend
-   npm run seed
-   ```
-
-4. **Iniciar Frontend** (puerto 3000)
+1. **Iniciar la aplicación**
    ```bash
    cd frontend
    npm run dev
    ```
 
-5. **Acceder a la aplicación**
-   - Abrir navegador en `http://localhost:3000`
+2. **Acceder a la aplicación**
+   - Abrir navegador en `http://localhost:5173`
+
+3. **Funcionalidades disponibles**
+   - **Dashboard**: Vista general con acceso rápido
+   - **Crear Ticket**: Formulario para crear nuevos issues en GitLab
+   - **Tablero**: Ver todos los tickets agrupados por estado (Abiertos/Cerrados)
+   - **Detalle de Ticket**: Ver información completa, comentarios y actualizar estado
 
 ## 📁 Estructura del Proyecto
 
 ```
 service-desk/
-├── backend/
-│   ├── config/          # Configuración de BD
-│   ├── controllers/     # Lógica de negocio
-│   ├── models/          # Modelos de PostgreSQL
-│   ├── routes/          # Rutas de la API
-│   ├── services/        # Servicios (GitLab)
-│   ├── scripts/         # Scripts de inicialización
-│   ├── server.js        # Punto de entrada
-│   └── package.json
-│
 ├── frontend/
 │   ├── src/
-│   │   ├── components/  # Componentes reutilizables
-│   │   │   ├── Layout/
-│   │   │   ├── TicketCard/
-│   │   │   └── CommentList/
-│   │   ├── context/     # Context API
-│   │   ├── hooks/       # Custom hooks
-│   │   ├── pages/       # Páginas principales
-│   │   ├── services/    # API services
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── index.css
+│   │   ├── components/      # Componentes reutilizables
+│   │   │   ├── Layout/      # Layout principal con navegación
+│   │   │   ├── TicketCard/  # Tarjeta de ticket individual
+│   │   │   └── CommentList/ # Lista de comentarios
+│   │   ├── context/         # Context API
+│   │   │   └── TicketContext.jsx  # Estado global de tickets
+│   │   ├── hooks/           # Custom hooks
+│   │   │   ├── useTicket.js       # Hook para un ticket individual
+│   │   │   └── useStats.js        # Hook para estadísticas
+│   │   ├── pages/           # Páginas principales
+│   │   │   ├── Dashboard.jsx      # Página de inicio
+│   │   │   ├── CreateTicket.jsx   # Formulario de creación
+│   │   │   ├── TicketBoard.jsx    # Tablero de tickets
+│   │   │   ├── TicketDetail.jsx   # Detalle de ticket
+│   │   │   └── Statistics.jsx     # Estadísticas
+│   │   ├── services/        # Servicios de API
+│   │   │   └── gitlabService.js   # Cliente de GitLab API
+│   │   ├── App.jsx          # Componente raíz
+│   │   ├── main.jsx         # Punto de entrada
+│   │   └── index.css        # Estilos globales
+│   ├── .env                 # Variables de entorno (NO subir a Git)
+│   ├── .gitignore           # Archivos ignorados
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
 │
+├── backend/                 # (Legacy - ya no se usa)
 ├── README.md
-├── INTEGRACION_GITLAB.md
-└── CONFIGURACION_POSTGRESQL.md
+├── ARQUITECTURA.md
+└── GUIA_DE_USO.md
 ```
 
 ## 🎯 Principios de Clean Code Aplicados
@@ -217,24 +192,25 @@ service-desk/
 - **Componentes reutilizables**: UI components modulares
 - **Custom Hooks**: Lógica reutilizable encapsulada
 
-## 📊 API Endpoints
+## 📊 Integración con GitLab API
 
-### Tickets
-- `GET /api/tickets` - Obtener todos los tickets (con filtros opcionales)
-- `GET /api/tickets/:id` - Obtener ticket por ID
-- `POST /api/tickets` - Crear nuevo ticket
-- `PUT /api/tickets/:id` - Actualizar ticket
-- `POST /api/tickets/:id/comments` - Agregar comentario
-- `DELETE /api/tickets/:id` - Eliminar ticket
+La aplicación utiliza directamente la API de GitLab para todas las operaciones:
 
-### Servicios
-- `GET /api/services` - Obtener todos los servicios
-- `POST /api/services` - Crear servicio
-- `POST /api/services/initialize` - Inicializar servicios predefinidos
+### Issues (Tickets)
+- `GET /projects/75469260/issues` - Obtener todos los issues
+- `GET /projects/75469260/issues/:iid` - Obtener issue específico
+- `POST /projects/75469260/issues` - Crear nuevo issue
+- `PUT /projects/75469260/issues/:iid` - Actualizar issue
 
-### Estadísticas
-- `GET /api/stats` - Obtener estadísticas completas
-- `GET /api/stats/recent` - Obtener tickets recientes
+### Notes (Comentarios)
+- `GET /projects/75469260/issues/:iid/notes` - Obtener comentarios de un issue
+- `POST /projects/75469260/issues/:iid/notes` - Agregar comentario a un issue
+
+### Autenticación
+Todas las peticiones incluyen el header:
+```
+PRIVATE-TOKEN: tu_token_de_gitlab
+```
 
 ## 🎨 Características de UI/UX
 
@@ -245,29 +221,51 @@ service-desk/
 - **Accesibilidad**: Labels, contraste adecuado
 - **Loading States**: Spinners y estados de carga
 
-## 📈 KPIs y Métricas
+## 📈 Categorización y Etiquetas
 
-El sistema rastrea y visualiza:
-- Total de tickets abiertos/resueltos/cerrados
-- Tickets por prioridad (P1, P2, P3, P4)
-- Tickets por servicio afectado
-- Tickets por estado
-- Tickets por categoría
-- Tiempo promedio de resolución
-- Tendencias temporales
+El sistema utiliza etiquetas (labels) de GitLab para categorizar:
+
+### Etiquetas de Servicio
+- Autenticación
+- Catálogo
+- Creación de pedidos
+- Inventario
+- Tracking
+- UX/UI
+- Visualización de pedidos
+
+### Etiquetas de Prioridad
+- P1 (Crítico)
+- P2 (Alto)
+- P3 (Medio)
+- P4 (Bajo)
+
+### Etiquetas de Categoría
+- Incidente
+- Solicitud de Servicio
+- Consulta
+- Cambio
+
+Todos los tickets se crean con estas etiquetas automáticamente desde el formulario.
 
 ## 🔧 Configuración de Desarrollo
 
 ### Scripts Disponibles
 
-**Backend:**
-- `npm start` - Inicia el servidor en producción
-- `npm run dev` - Inicia el servidor con nodemon
-
 **Frontend:**
-- `npm run dev` - Inicia el servidor de desarrollo
+- `npm run dev` - Inicia el servidor de desarrollo (puerto 5173)
 - `npm run build` - Construye para producción
 - `npm run preview` - Vista previa de build de producción
+- `npm run lint` - Ejecuta ESLint para verificar código
+
+### Variables de Entorno
+
+Crear archivo `.env` en la carpeta `frontend`:
+```env
+VITE_GITLAB_TOKEN=tu_token_aqui
+```
+
+**Seguridad**: El token se mantiene en el frontend pero no se expone en el código fuente. Para producción, considerar usar un backend proxy que maneje el token de forma segura.
 
 ## 🤝 Contribución
 

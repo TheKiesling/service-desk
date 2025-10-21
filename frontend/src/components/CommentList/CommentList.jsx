@@ -1,4 +1,4 @@
-import { MessageCircle, Lock } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import './CommentList.css';
@@ -15,29 +15,25 @@ const CommentList = ({ comments }) => {
 
   return (
     <div className="comment-list">
-      {comments.map((comment, index) => (
+      {comments.map((comment) => (
         <div 
-          key={index} 
-          className={`comment ${comment.isInternal ? 'comment-internal' : ''}`}
+          key={comment.id} 
+          className="comment"
         >
           <div className="comment-header">
             <div className="comment-author">
-              <strong>{comment.author}</strong>
-              {comment.isInternal && (
-                <span className="internal-badge">
-                  <Lock size={12} />
-                  Interno
-                </span>
-              )}
+              <strong>Anónimo</strong>
             </div>
             <span className="comment-time">
-              {formatDistanceToNow(new Date(comment.createdAt), { 
+              {formatDistanceToNow(new Date(comment.created_at), { 
                 addSuffix: true, 
                 locale: es 
               })}
             </span>
           </div>
-          <p className="comment-content">{comment.content}</p>
+          <p className="comment-content" style={{ whiteSpace: 'pre-wrap' }}>
+            {comment.body}
+          </p>
         </div>
       ))}
     </div>

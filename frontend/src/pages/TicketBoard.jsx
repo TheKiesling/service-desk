@@ -7,9 +7,8 @@ import './TicketBoard.css';
 const TicketBoard = () => {
   const { tickets, loading, fetchTickets } = useTickets();
   const [filters, setFilters] = useState({
-    status: '',
     priority: '',
-    service: '',
+    label: '',
   });
 
   const handleFilterChange = (e) => {
@@ -21,18 +20,21 @@ const TicketBoard = () => {
   };
 
   useEffect(() => {
-    const activeFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, value]) => value !== '')
-    );
-    fetchTickets(activeFilters);
-  }, [filters]);
+    fetchTickets();
+  }, []);
+
+  const filteredTickets = tickets.filter((ticket) => {
+    const matchesPriority = !filters.priority || 
+      ticket.labels?.some(label => label === filters.priority);
+    const matchesLabel = !filters.label || 
+      ticket.labels?.some(label => label === filters.label);
+    
+    return matchesPriority && matchesLabel;
+  });
 
   const groupedTickets = {
-    'Abierto': tickets.filter((t) => t.status === 'Abierto'),
-    'En Progreso': tickets.filter((t) => t.status === 'En Progreso'),
-    'En Espera': tickets.filter((t) => t.status === 'En Espera'),
-    'Resuelto': tickets.filter((t) => t.status === 'Resuelto'),
-    'Cerrado': tickets.filter((t) => t.status === 'Cerrado'),
+    'Abiertos': filteredTickets.filter((t) => t.state === 'opened'),
+    'Cerrados': filteredTickets.filter((t) => t.state === 'closed'),
   };
 
   if (loading) {
@@ -55,20 +57,6 @@ const TicketBoard = () => {
           <Filter size={20} />
           <span>Filtros</span>
         </div>
-        
-        <select
-          name="status"
-          className="form-select filter-select"
-          value={filters.status}
-          onChange={handleFilterChange}
-        >
-          <option value="">Todos los Estados</option>
-          <option value="Abierto">Abierto</option>
-          <option value="En Progreso">En Progreso</option>
-          <option value="En Espera">En Espera</option>
-          <option value="Resuelto">Resuelto</option>
-          <option value="Cerrado">Cerrado</option>
-        </select>
 
         <select
           name="priority"
@@ -84,9 +72,9 @@ const TicketBoard = () => {
         </select>
 
         <select
-          name="service"
+          name="label"
           className="form-select filter-select"
-          value={filters.service}
+          value={filters.label}
           onChange={handleFilterChange}
         >
           <option value="">Todas las Categorías</option>
@@ -110,7 +98,7 @@ const TicketBoard = () => {
             <div className="board-column-content">
               {statusTickets.length > 0 ? (
                 statusTickets.map((ticket) => (
-                  <TicketCard key={ticket._id} ticket={ticket} />
+                  <TicketCard key={ticket.iid} ticket={ticket} />
                 ))
               ) : (
                 <div className="empty-column">
