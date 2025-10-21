@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Plus, List } from 'lucide-react';
+import { LayoutDashboard, Plus, List, BarChart3 } from 'lucide-react';
 import './Layout.css';
 
 const Layout = ({ children }) => {
@@ -29,6 +29,10 @@ const Layout = ({ children }) => {
             <Link to="/tablero" className={`navbar-link ${isActive('/tablero')}`}>
               <List size={18} />
               Tablero
+            </Link>
+            <Link to="/estadisticas" className={`navbar-link ${isActive('/estadisticas')}`}>
+              <BarChart3 size={18} />
+              Estadísticas
             </Link>
           </div>
         </div>

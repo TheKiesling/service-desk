@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import CreateTicket from './pages/CreateTicket';
 import TicketBoard from './pages/TicketBoard';
 import TicketDetail from './pages/TicketDetail';
+import Statistics from './pages/Statistics';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/crear-ticket" element={<CreateTicket />} />
             <Route path="/tablero" element={<TicketBoard />} />
+            <Route path="/estadisticas" element={<Statistics />} />
             <Route path="/ticket/:id" element={<TicketDetail />} />
           </Routes>
         </Layout>

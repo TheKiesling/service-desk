@@ -158,63 +158,6 @@ const CreateTicket = () => {
             />
           </div>
 
-          <div className="form-divider">
-            <span>Información de contacto</span>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="affectedUser.name">
-              Tu Nombre *
-            </label>
-            <input
-              id="affectedUser.name"
-              name="affectedUser.name"
-              type="text"
-              className="form-input"
-              value={formData.affectedUser.name}
-              onChange={handleChange}
-              required
-              placeholder="Nombre completo"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="affectedUser.email">
-              Correo Electrónico *
-            </label>
-            <input
-              id="affectedUser.email"
-              name="affectedUser.email"
-              type="email"
-              className="form-input"
-              value={formData.affectedUser.email}
-              onChange={handleChange}
-              required
-              placeholder="tu@email.com"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="affectedUser.role">
-              Rol *
-            </label>
-            <select
-              id="affectedUser.role"
-              name="affectedUser.role"
-              className="form-select"
-              value={formData.affectedUser.role}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Selecciona tu rol</option>
-              <option value="Cliente">Cliente</option>
-              <option value="Personal Administrativo">Personal Administrativo</option>
-              <option value="Personal de Producción">Personal de Producción</option>
-              <option value="Personal de Ventas">Personal de Ventas</option>
-              <option value="Gerencia">Gerencia</option>
-            </select>
-          </div>
-
           <div className="form-actions">
             <button
               type="button"
